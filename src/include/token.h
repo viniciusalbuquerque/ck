@@ -9,7 +9,9 @@ typedef struct TOKEN_STRUCT {
         TT_FUN,
         TT_VAL,
         TT_VAR,
+        TT_NUMBER,
         TT_COL,
+        TT_SEMI_COL,
         TT_EQ,
         TT_CURLY_LB,
         TT_CURLY_RB,
@@ -17,6 +19,7 @@ typedef struct TOKEN_STRUCT {
         TT_RB,
         TT_LP,
         TT_RP,
+        TT_TYPE,
         TT_RET,
         TT_WS,
         TT_BAD_TOKEN,
@@ -26,4 +29,7 @@ typedef struct TOKEN_STRUCT {
 
 token_s* token_init(char* value, unsigned int pos, int type);
 token_s* token_create_from_alphanum(char* value, unsigned int pos);
+char* token_type_str(int type);
+int token_type_from_value(char curr);
+int token_is_single_char(char curr);
 #endif

@@ -1,11 +1,21 @@
 #include <stdio.h>
 #include <string.h>
 #include "include/lexer.h"
+#include "include/token.h"
 
 void ck_compile(char* file_text) {
+    int count = 0;
     lexer_s* lexer = lexer_init(file_text);
     token_s** tokens = lexer_tokenize(lexer);
-    printf("text: %s\n", lexer->text);
+    token_s* token = tokens[count];
+    int type = token->type;
+    while (type != TT_EOF) {
+        printf("%s: %s\n", token_type_str(type), token->value);
+        count++;
+        token = tokens[count];
+        type = token->type;
+    }
+    printf("%s\n", token_type_str(type));
 }
 
 char* ck_read_file(const char* filename) {
