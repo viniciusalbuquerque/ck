@@ -40,6 +40,13 @@ void lexer_previous(lexer_s* lexer) {
     lexer->current = text[lexer->pos];
 }
 
+void lexer_skip_whitespace(lexer_s* lexer) {
+    token_s* token = lexer_next_token(lexer);
+    while (token->type == TT_WS) {
+        token = lexer_next_token(lexer);
+    }
+}
+
 int is_whitespace(char c) {
     return isspace(c) || c == '\t' || c == 10 || c == 13;
 }
@@ -109,8 +116,9 @@ token_s* lexer_next_token(lexer_s* lexer) {
         return lexer_parse_whitespace(lexer);
     } 
     printf("Was not expecting %c at position %d.\n", c, lexer->pos);
-    char* value = malloc(sizeof(char));
+    exit(1);
+    /*char* value = malloc(sizeof(char));
     *value = c;
-    return token_init(value, lexer->pos, TT_BAD_TOKEN);
+    return token_init(value, lexer->pos, TT_BAD_TOKEN);*/
 }
 
