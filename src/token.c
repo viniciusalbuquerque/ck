@@ -3,7 +3,7 @@
 #include <string.h>
 #include "include/token.h"
 
-char* single_chars = "{[()]};:";
+char* single_chars = "{[()]};:,";
 
 char* token_type_str_value(int type) {
     switch (type) {
@@ -26,6 +26,7 @@ int token_type_from_value(char curr) {
         case ']': return TT_RB;
         case ';': return TT_SEMI_COL;
         case ':': return TT_COL;
+        case ',': return TT_COMMA;
     }
     return TT_BAD_TOKEN;
 }
@@ -45,19 +46,21 @@ char* token_type_str(int type) {
         case TT_RP: return "TT_RP";
         case TT_CURLY_LB: return "TT_CURLY_LB";
         case TT_CURLY_RB: return "TT_CURLY_RB";
-        case TT_EOF: return "TT_EOF";
         case TT_COL: return "TT_COL";
         case TT_SEMI_COL: return "TT_SEMI_COL";
         case TT_WS: return "TT_WS";
         case TT_TYPE: return "TT_TYPE";
         case TT_NUMBER: return "TT_NUMBER";
+        case TT_COMMA: return "TT_COMMA";
+        case TT_RET: return "TT_RET";
+        case TT_INCLUDE: return "TT_INCLUDE";
+        case TT_EOF: return "TT_EOF";
         case TT_BAD_TOKEN: 
         default: return "TT_BAD_TOKEN";
     }
 }
 
 int is_a_type(char* value) {
-    printf("is_a_type: %s\n", value);
     return ((strcmp(value, "int") == 0) || (strcmp(value, "char") == 0));
 }
 

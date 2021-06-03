@@ -10,7 +10,7 @@ void ck_compile(char* file_text) {
     token_s* token = tokens[count];
     int type = token->type;
     while (type != TT_EOF) {
-        printf("%s: %s\n", token_type_str(type), token->value);
+        printf("%s ", token_type_str(type));
         count++;
         token = tokens[count];
         type = token->type;

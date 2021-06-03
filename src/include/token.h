@@ -9,7 +9,9 @@ typedef struct TOKEN_STRUCT {
         TT_FUN,
         TT_VAL,
         TT_VAR,
+        TT_ATTRIB,
         TT_NUMBER,
+        TT_COMMA,
         TT_COL,
         TT_SEMI_COL,
         TT_EQ,
@@ -32,4 +34,5 @@ token_s* token_create_from_alphanum(char* value, unsigned int pos);
 char* token_type_str(int type);
 int token_type_from_value(char curr);
 int token_is_single_char(char curr);
+int token_get_type_from_alphanum(char* alphanum);
 #endif

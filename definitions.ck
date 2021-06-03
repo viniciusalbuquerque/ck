@@ -8,3 +8,4 @@ var variable_name: var_type = variable_value # mutable
 fun fun_name(arg_name: arg_type, arg_name2: arg_type2): return_type {
 }
 
+
