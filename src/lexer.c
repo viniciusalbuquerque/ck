@@ -77,7 +77,8 @@ token_s* lexer_parse_single_char(lexer_s* lexer) {
     char* value = malloc(sizeof(char) + 1);
     memset(value, '\0', 2);
     *value = lexer->current;
-    return token_init(value, lexer->pos, token_type_from_value(lexer->current));
+    lexer_next(lexer);
+    return token_init(value, lexer->pos, token_type_from_value(value[0]));
 }
 
 token_s* lexer_parse_whitespace(lexer_s* lexer) {
@@ -90,35 +91,26 @@ token_s* lexer_parse_whitespace(lexer_s* lexer) {
     return token_init(ws, lexer->pos, TT_WS);
 }
 
-token_s** lexer_tokenize(lexer_s* lexer) {
-    token_s** tokens = malloc(sizeof(token_s*));
-    size_t tokens_size = 0;
-    while(lexer->current != '\0') {
-        char c = lexer->current;
-        token_s* token;
-        if (token_is_single_char(c)) {
-            token = lexer_parse_single_char(lexer);
-            lexer_next(lexer);
-        } else if (isdigit(lexer->current)) {
-            token = lexer_parse_number_token(lexer);
-        } else if (isalpha(lexer->current)) {
-            token = lexer_parse_alpha(lexer);
-        } else if (is_whitespace(lexer->current)) {
-            token = lexer_parse_whitespace(lexer);
-        } else {
-            char* value = malloc(sizeof(char));
-            *value = c;
-            token = token_init(value, lexer->pos, TT_BAD_TOKEN);
-        }
-        tokens_size += 1;
-        tokens = realloc(tokens, tokens_size * sizeof(token_s*));
-        tokens[tokens_size-1] = token;
+token_s* lexer_next_token(lexer_s* lexer) {
+    if (lexer->current == '\0') {
+        char* value = malloc(sizeof(char));
+        *value = '\0';
+        return token_init(value, lexer->pos, TT_EOF);
     }
-    tokens_size += 1;
-    tokens = realloc(tokens, tokens_size * sizeof(token_s*));
+
+    char c = lexer->current;
+    if (token_is_single_char(c)) {
+        return lexer_parse_single_char(lexer);
+    } else if (isdigit(lexer->current)) {
+        return lexer_parse_number_token(lexer);
+    } else if (isalpha(lexer->current)) {
+        return lexer_parse_alpha(lexer);
+    } else if (is_whitespace(lexer->current)) {
+        return lexer_parse_whitespace(lexer);
+    } 
+    printf("Was not expecting %c at position %d.\n", c, lexer->pos);
     char* value = malloc(sizeof(char));
-    *value = '\0';
-    tokens[tokens_size-1] = token_init(value, lexer->pos, TT_EOF);
-    return tokens;
+    *value = c;
+    return token_init(value, lexer->pos, TT_BAD_TOKEN);
 }
 

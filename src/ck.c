@@ -2,20 +2,12 @@
 #include <string.h>
 #include "include/lexer.h"
 #include "include/token.h"
+#include "include/parser.h"
 
 void ck_compile(char* file_text) {
-    int count = 0;
     lexer_s* lexer = lexer_init(file_text);
-    token_s** tokens = lexer_tokenize(lexer);
-    token_s* token = tokens[count];
-    int type = token->type;
-    while (type != TT_EOF) {
-        printf("%s ", token_type_str(type));
-        count++;
-        token = tokens[count];
-        type = token->type;
-    }
-    printf("%s\n", token_type_str(type));
+    parser_s* parser = parser_init(lexer);
+    parser_parse(parser);
 }
 
 char* ck_read_file(const char* filename) {
