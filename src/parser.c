@@ -1,8 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "include/lexer.h"
 #include "include/parser.h"
-#include "include/token.h"
 
 parser_s* parser_init(lexer_s* lexer) {
     parser_s* parser = malloc(sizeof(parser_s));
@@ -11,8 +9,8 @@ parser_s* parser_init(lexer_s* lexer) {
     return parser;
 }
 
-void parser_next_token(parser_s* parser) {
-    parser->token = lexer_next_token(parser->lexer);
+token_s* parser_next_token(parser_s* parser) {
+    return parser->token = lexer_next_token(parser->lexer);
 }
 
 void parser_skip_whitespace(parser_s* parser) {
@@ -21,11 +19,8 @@ void parser_skip_whitespace(parser_s* parser) {
     }
 }
 
-void parser_parse_expression_number(parser_s* parser) {
-
-}
-
-void parser_parse_expression(parser_s* parser) {
+ast_s* parser_parse_expression(parser_s* parser) {
+    printf("parser_parse_expression\n");
     parser_skip_whitespace(parser);
     switch(parser->token->type) {
         case TT_ID:
@@ -36,6 +31,7 @@ void parser_parse_expression(parser_s* parser) {
             break;
     }
     parser_skip_whitespace(parser);
+    return ast_init(AT_EXPRESSION);
 }
 
 void print_and_exit(char* parsing_element, char* expected, char* found) {
@@ -43,12 +39,14 @@ void print_and_exit(char* parsing_element, char* expected, char* found) {
     exit(1);
 }
 
-void parser_parse_conditional(parser_s* parser) {
+ast_s* parser_parse_conditional(parser_s* parser) {
     printf("parser_parse_conditional\n");
     parser_skip_whitespace(parser);
     if (parser->token->type != TT_IF) {
         print_and_exit("conditional", "if", parser->token->value);
     }
+
+    ast_s* ast_conditional = ast_init(AT_CONDITIONAL);
 
     parser_next_token(parser);
     parser_skip_whitespace(parser);
@@ -59,38 +57,47 @@ void parser_parse_conditional(parser_s* parser) {
 
     parser_next_token(parser);
     parser_skip_whitespace(parser);
-    parser_parse_expression(parser);
+    ast_s* ast_exp = parser_parse_expression(parser);
     parser_skip_whitespace(parser);
 
     if (parser->token->type != TT_RP) {
         print_and_exit("conditional", ")", parser->token->value);
     }
+
+    ast_add_child(ast_conditional, ast_exp);
     parser_next_token(parser);
-    parser_parse_statement(parser);
+    ast_s* ast_stmt = parser_parse_statement(parser);
+    ast_add_child(ast_conditional, ast_stmt);
+    return ast_conditional;
 }
 
-void parser_parse_return(parser_s* parser) {
+ast_s* parser_parse_return(parser_s* parser) {
     printf("parser_parse_return\n");
     parser_skip_whitespace(parser);
     if (parser->token->type != TT_RET) {
         print_and_exit("return", "return", parser->token->value);
     }
+    ast_s* ast_ret = ast_init(AT_RETURN);
     parser_next_token(parser);
     parser_skip_whitespace(parser);
-    parser_parse_expression(parser);
+    ast_s* ast_exp = parser_parse_expression(parser);
     parser_skip_whitespace(parser);
     if (parser->token->type != TT_SEMI_COL) {
         print_and_exit("return", ";", parser->token->value);
     }
+    ast_add_child(ast_ret, ast_exp);
     parser_next_token(parser);
     parser_skip_whitespace(parser);
+    return ast_ret;
 }
 
-void parser_parser_variable(parser_s* parser) {
+ast_s* parser_parser_variable(parser_s* parser) {
     parser_skip_whitespace(parser);
     if (parser->token->type != TT_VAR) {
         print_and_exit("declaring variable", "var", parser->token->value);
     }
+
+    ast_s* ast_var_dec = ast_init(AT_VARIABLE);
 
     parser_next_token(parser);
     parser_skip_whitespace(parser);
@@ -122,53 +129,62 @@ void parser_parser_variable(parser_s* parser) {
     parser_next_token(parser);
     parser_skip_whitespace(parser);
     if (parser->token->type == TT_ATTRIB) {
-        parser_parse_expression(parser);
+        ast_s* ast_exp = parser_parse_expression(parser);
+        ast_add_child(ast_var_dec, ast_exp);
     }
     if (parser->token->type != TT_SEMI_COL) {
         print_and_exit("declaring variable", ";", parser->token->value);
     }
     parser_next_token(parser);
     parser_skip_whitespace(parser);
-
+    return ast_var_dec;
 }
 
-void parser_parse_compound(parser_s* parser) {
+ast_s* parser_parse_compound(parser_s* parser) {
     printf("parser_parse_compound\n");
     parser_skip_whitespace(parser);
     if (parser->token->type != TT_CURLY_LB) {
         print_and_exit("compound", "{", parser->token->value);
     }
 
+    ast_s* ast_compound = ast_init(AT_COMPOUND);
     parser_next_token(parser);
     parser_skip_whitespace(parser);
-    parser_parse_statement(parser);
+    ast_s* ast_stmt = parser_parse_statement(parser);
     parser_skip_whitespace(parser);
 
     if (parser->token->type != TT_CURLY_RB) {
         print_and_exit("compound", "}", parser->token->value);
     }
+
+    ast_add_child(ast_compound, ast_stmt);
+    return ast_compound;
 }
 
-void parser_parse_statement(parser_s* parser) {
+ast_s* parser_parse_statement(parser_s* parser) {
     printf("parser_parse_statement\n");
+    ast_s* ast_statement = ast_init(AT_STATEMENT);
+    ast_s* ast_child = 0;
     parser_skip_whitespace(parser);
     switch (parser->token->type) {
         case TT_CURLY_LB:
-            parser_parse_compound(parser);
+            ast_child = parser_parse_compound(parser);
             break;
         case TT_IF:
-            parser_parse_conditional(parser);
+            ast_child = parser_parse_conditional(parser);
             break;
         case TT_RET:
-            parser_parse_return(parser);
+            ast_child = parser_parse_return(parser);
             break;
         case TT_VAR:
-            parser_parser_variable(parser);
+            ast_child = parser_parser_variable(parser);
             break;
         default: // We need a NO-OP
-            parser_parse_expression(parser);
+            ast_child = parser_parse_expression(parser);
             break;
     }
+    ast_add_child(ast_statement, ast_child);
+    return ast_statement;
 }
 
 void parser_parse_function_args(parser_s* parser) {
@@ -198,11 +214,12 @@ void parser_parse_function_args(parser_s* parser) {
     }
 }
 
-void parser_parse_function(parser_s* parser) {
+ast_s* parser_parse_function(parser_s* parser) {
     printf("parser_parse_function\n");
     if (parser->token->type != TT_FUN) {
         print_and_exit("function", "fun", parser->token->value);
     }
+    ast_s* ast_fun = ast_init(AT_FUNCTION_DEFINITION);
     parser_next_token(parser);
     parser_skip_whitespace(parser);
     if (parser->token->type != TT_ID) {
@@ -245,20 +262,22 @@ void parser_parse_function(parser_s* parser) {
 
     parser_next_token(parser);
     parser_skip_whitespace(parser);
-    parser_parse_statement(parser);
+    ast_s* ast_statement = parser_parse_statement(parser);
+    ast_add_child(ast_fun, ast_statement);
     if (parser->token->type != TT_CURLY_RB) {
         print_and_exit("function", "}", parser->token->value);
     }
+    return ast_fun;
 }
 
-// TODO: It's not going to return void.
-void parser_parse(parser_s* parser) {
-    token_s* token = lexer_next_token(parser->lexer);
-    parser->token = token;
-    while (token->type != TT_EOF) {
+ast_s* parser_parse(parser_s* parser) {
+    ast_s* ast = ast_init(AT_PROGRAM);
+    token_s* token = 0;
+    while ((token = parser_next_token(parser))->type != TT_EOF) {
+        ast_s* child = 0;
         switch(token->type) {
             case TT_FUN:
-                 parser_parse_function(parser);
+                 child = parser_parse_function(parser);
                  break;
             default:
                 exit(0);
@@ -268,6 +287,8 @@ void parser_parse(parser_s* parser) {
         if (token->type == TT_BAD_TOKEN) {
             exit(1);
         }
+        ast_add_child(ast, child);
     }
     printf("%s\n", token_type_str(token->type));
+    return ast;
 }

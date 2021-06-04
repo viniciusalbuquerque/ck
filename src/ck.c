@@ -7,7 +7,8 @@
 void ck_compile(char* file_text) {
     lexer_s* lexer = lexer_init(file_text);
     parser_s* parser = parser_init(lexer);
-    parser_parse(parser);
+    ast_s* ast = parser_parse(parser);
+    ast_print(ast);
 }
 
 char* ck_read_file(const char* filename) {
