@@ -21,13 +21,158 @@ void parser_skip_whitespace(parser_s* parser) {
     }
 }
 
+void parser_parse_expression_number(parser_s* parser) {
+
+}
+
 void parser_parse_expression(parser_s* parser) {
+    parser_skip_whitespace(parser);
+    switch(parser->token->type) {
+        case TT_ID:
+        case TT_NUMBER:
+            parser_next_token(parser);
+            break;
+        default:
+            break;
+    }
+    parser_skip_whitespace(parser);
+}
+
+void print_and_exit(char* parsing_element, char* expected, char* found) {
+    printf("Error parsing %s. Expected '%s' and found %s\n", parsing_element, expected, found);
+    exit(1);
+}
+
+void parser_parse_conditional(parser_s* parser) {
+    printf("parser_parse_conditional\n");
+    parser_skip_whitespace(parser);
+    if (parser->token->type != TT_IF) {
+        print_and_exit("conditional", "if", parser->token->value);
+    }
+
+    parser_next_token(parser);
+    parser_skip_whitespace(parser);
+
+    if (parser->token->type != TT_LP) {
+        print_and_exit("conditional", "(", parser->token->value);
+    }
+
+    parser_next_token(parser);
+    parser_skip_whitespace(parser);
+    parser_parse_expression(parser);
+    parser_skip_whitespace(parser);
+
+    if (parser->token->type != TT_RP) {
+        print_and_exit("conditional", ")", parser->token->value);
+    }
+    parser_next_token(parser);
+    parser_parse_statement(parser);
+}
+
+void parser_parse_return(parser_s* parser) {
+    printf("parser_parse_return\n");
+    parser_skip_whitespace(parser);
+    if (parser->token->type != TT_RET) {
+        print_and_exit("return", "return", parser->token->value);
+    }
+    parser_next_token(parser);
+    parser_skip_whitespace(parser);
+    parser_parse_expression(parser);
+    parser_skip_whitespace(parser);
+    if (parser->token->type != TT_SEMI_COL) {
+        print_and_exit("return", ";", parser->token->value);
+    }
+    parser_next_token(parser);
+    parser_skip_whitespace(parser);
+}
+
+void parser_parser_variable(parser_s* parser) {
+    parser_skip_whitespace(parser);
+    if (parser->token->type != TT_VAR) {
+        print_and_exit("declaring variable", "var", parser->token->value);
+    }
+
+    parser_next_token(parser);
+    parser_skip_whitespace(parser);
+    if (parser->token->type != TT_ID) {
+        print_and_exit("declaring variable", "a name for your variable", parser->token->value);
+    }
+    parser_next_token(parser);
+    parser_skip_whitespace(parser);
+
+    while (parser->token->type == TT_COMMA) {
+        parser_next_token(parser);
+        parser_skip_whitespace(parser);
+        if (parser->token->type != TT_ID) {
+            print_and_exit("declaring variable", "a name for your variable", parser->token->value);
+        }
+        parser_next_token(parser);
+        parser_skip_whitespace(parser);
+    }
+
+    // For now it will be mandatory to declare type
+    if (parser->token->type != TT_COL) {
+        print_and_exit("declaring variable", ":", parser->token->value);
+    }
+    parser_next_token(parser);
+    parser_skip_whitespace(parser);
+    if (parser->token->type != TT_TYPE) {
+        print_and_exit("declaring variable", "a type for your variable", parser->token->value);
+    }
+    parser_next_token(parser);
+    parser_skip_whitespace(parser);
+    if (parser->token->type == TT_ATTRIB) {
+        parser_parse_expression(parser);
+    }
+    if (parser->token->type != TT_SEMI_COL) {
+        print_and_exit("declaring variable", ";", parser->token->value);
+    }
+    parser_next_token(parser);
+    parser_skip_whitespace(parser);
+
+}
+
+void parser_parse_compound(parser_s* parser) {
+    printf("parser_parse_compound\n");
+    parser_skip_whitespace(parser);
+    if (parser->token->type != TT_CURLY_LB) {
+        print_and_exit("compound", "{", parser->token->value);
+    }
+
+    parser_next_token(parser);
+    parser_skip_whitespace(parser);
+    parser_parse_statement(parser);
+    parser_skip_whitespace(parser);
+
+    if (parser->token->type != TT_CURLY_RB) {
+        print_and_exit("compound", "}", parser->token->value);
+    }
 }
 
 void parser_parse_statement(parser_s* parser) {
+    printf("parser_parse_statement\n");
+    parser_skip_whitespace(parser);
+    switch (parser->token->type) {
+        case TT_CURLY_LB:
+            parser_parse_compound(parser);
+            break;
+        case TT_IF:
+            parser_parse_conditional(parser);
+            break;
+        case TT_RET:
+            parser_parse_return(parser);
+            break;
+        case TT_VAR:
+            parser_parser_variable(parser);
+            break;
+        default: // We need a NO-OP
+            parser_parse_expression(parser);
+            break;
+    }
 }
 
 void parser_parse_function_args(parser_s* parser) {
+    printf("parser_parse_function_args\n");
     while (parser->token->type != TT_RP) {
         if (parser->token->type != TT_ID) {
             return;
@@ -36,14 +181,12 @@ void parser_parse_function_args(parser_s* parser) {
         parser_next_token(parser);
         parser_skip_whitespace(parser);
         if (parser->token->type != TT_COL) {
-            printf("Error parsing function. Expected ':' and found %s\n", parser->token->value);
-            exit(1);
+            print_and_exit("function args", ":", parser->token->value);
         }
         parser_next_token(parser);
         parser_skip_whitespace(parser);
         if (parser->token->type != TT_TYPE) {
-            printf("Error parsing function. Expected a type for your variable and found %s\n", parser->token->value);
-            exit(1);
+            print_and_exit("function args", "type for your variable", parser->token->value);
         }
         parser_next_token(parser);
         parser_skip_whitespace(parser);
@@ -56,61 +199,55 @@ void parser_parse_function_args(parser_s* parser) {
 }
 
 void parser_parse_function(parser_s* parser) {
+    printf("parser_parse_function\n");
     if (parser->token->type != TT_FUN) {
-        printf("Error parsing function. Expected 'fun' keyword. Found %s\n", parser->token->value);
-        exit(1);
+        print_and_exit("function", "fun", parser->token->value);
     }
     parser_next_token(parser);
     parser_skip_whitespace(parser);
     if (parser->token->type != TT_ID) {
-        printf("Expected a name for the function. Found %s\n", parser->token->value);
-        exit(1);
+        print_and_exit("function", "name for the function", parser->token->value);
     }
     parser_next_token(parser);
     parser_skip_whitespace(parser);
 
     if (parser->token->type != TT_LP) {
-        printf("Error parsing function. Expected '(' and found %s\n", parser->token->value);
-        exit(1);
+        print_and_exit("function", "(", parser->token->value);
     }
+
     parser_next_token(parser);
     parser_parse_function_args(parser);
 
     if (parser->token->type != TT_RP) {
-        printf("Error parsing function. Expected ')' and found %s\n", parser->token->value);
-        exit(1);
+        print_and_exit("function", ")", parser->token->value);
     }
 
     parser_next_token(parser);
     parser_skip_whitespace(parser);
 
     if (parser->token->type != TT_COL) {
-        printf("Error parsing function. Expected ':' and found %s\n", parser->token->value);
-        exit(1);
+        print_and_exit("function", ":", parser->token->value);
     }
 
     parser_next_token(parser);
     parser_skip_whitespace(parser);
 
     if (parser->token->type != TT_TYPE) {
-        printf("Error parsing function. Expected a return type and found %s\n", parser->token->value);
-        exit(1);
+        print_and_exit("function", "return type", parser->token->value);
     }
 
     parser_next_token(parser);
     parser_skip_whitespace(parser);
 
     if (parser->token->type != TT_CURLY_LB) {
-        printf("Error parsing function. Expected '{' and found %s\n", parser->token->value);
-        exit(1);
+        print_and_exit("function", "{", parser->token->value);
     }
 
     parser_next_token(parser);
     parser_skip_whitespace(parser);
     parser_parse_statement(parser);
     if (parser->token->type != TT_CURLY_RB) {
-        printf("Error parsing function. Expected '}' and found %s\n", parser->token->value);
-        exit(1);
+        print_and_exit("function", "}", parser->token->value);
     }
 }
 

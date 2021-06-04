@@ -4,28 +4,33 @@ typedef struct TOKEN_STRUCT {
     unsigned int pos;
     char* value;
     enum {
-        TT_ID,
-        TT_INCLUDE,
-        TT_FUN,
-        TT_VAL,
-        TT_VAR,
-        TT_ATTRIB,
-        TT_NUMBER,
-        TT_COMMA,
-        TT_COL,
-        TT_SEMI_COL,
-        TT_EQ,
-        TT_CURLY_LB,
-        TT_CURLY_RB,
-        TT_LB,
-        TT_RB,
-        TT_LP,
-        TT_RP,
-        TT_TYPE,
-        TT_RET,
-        TT_WS,
-        TT_BAD_TOKEN,
-        TT_EOF,
+        TT_ID, // a string
+        TT_INCLUDE, // #include
+        TT_FUN, // fun
+        TT_REF, // &
+        TT_STAR, // *
+        TT_VAL, // val
+        TT_VAR, // var
+        TT_FOR, // for
+        TT_WHILE, // while
+        TT_IF, // if
+        TT_ATTRIB, // =
+        TT_NUMBER, // a number
+        TT_COMMA, //,
+        TT_COL, // :
+        TT_SEMI_COL, // ;
+        TT_EQ, // ==
+        TT_CURLY_LB, // {
+        TT_CURLY_RB, // }
+        TT_LB, // [
+        TT_RB, // ]
+        TT_LP, // (
+        TT_RP, // )
+        TT_TYPE, // type
+        TT_RET, // return
+        TT_WS, // whitespace
+        TT_BAD_TOKEN, //a bad todken (don't know if I'm going to use it
+        TT_EOF, // eof
     } type;
 } token_s;
 

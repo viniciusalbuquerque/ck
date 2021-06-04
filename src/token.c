@@ -11,6 +11,12 @@ char* token_type_str_value(int type) {
             return "fun";
         case TT_RET:
             return "return";
+        case TT_IF:
+            return "if";
+        case TT_FOR:
+            return "for";
+        case TT_WHILE:
+            return "while";
         default:
             return "";
     }
@@ -55,6 +61,11 @@ char* token_type_str(int type) {
         case TT_RET: return "TT_RET";
         case TT_INCLUDE: return "TT_INCLUDE";
         case TT_EOF: return "TT_EOF";
+        case TT_FOR: return "TT_FOR";
+        case TT_WHILE: return "TT_WHILE";
+        case TT_IF: return "TT_IF";
+        case TT_REF: return "TT_REF";
+        case TT_STAR: return "TT_STAR";
         case TT_BAD_TOKEN: 
         default: return "TT_BAD_TOKEN";
     }
