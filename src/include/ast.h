@@ -16,4 +16,4 @@ typedef struct AST_STRUCT {
 
 ast_s* ast_init(int type);
 void ast_add_child(ast_s* ast, ast_s* child);
-void ast_print(ast_s* ast);
+void ast_print(ast_s* ast, int level);

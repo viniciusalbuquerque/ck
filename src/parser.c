@@ -277,18 +277,20 @@ ast_s* parser_parse(parser_s* parser) {
         ast_s* child = 0;
         switch(token->type) {
             case TT_FUN:
-                 child = parser_parse_function(parser);
-                 break;
+                child = parser_parse_function(parser);
+                break;
             default:
-                exit(0);
+                parser_skip_whitespace(parser);
+                break;
         }
-        printf("%s ", token_type_str(token->type));
         token = lexer_next_token(parser->lexer);
+
         if (token->type == TT_BAD_TOKEN) {
+            printf("\nBAD_TOKEN. Exiting\n");
             exit(1);
         }
-        ast_add_child(ast, child);
+        if (child) ast_add_child(ast, child);
     }
-    printf("%s\n", token_type_str(token->type));
+    printf("parser_parse done\n");
     return ast;
 }

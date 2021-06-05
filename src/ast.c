@@ -25,22 +25,28 @@ char* ast_type_to_str(ast_s* ast) {
 }
 
 void ast_add_child(ast_s* ast, ast_s* child) {
-    printf("add to %s, a %s", ast_type_to_str(ast), ast_type_to_str(child));
+    if (!child) return;
+    if (ast->type == AT_PROGRAM) {
+        printf("add to %s a %s\n", ast_type_to_str(ast), ast_type_to_str(child));
+    }
     ast->children_size += 1;
     if (!ast->children) {
         ast->children = malloc(sizeof(ast_s*) * ast->children_size);
-        ast->children[0] = child;
     } else {
-        ast->children = realloc(ast, sizeof(ast_s*) * ast->children_size);
-        ast->children[ast->children_size - 1] = child;
+        ast->children = realloc(ast->children, sizeof(ast_s*) * ast->children_size);
     }
+    ast->children[ast->children_size - 1] = child;
 }
 
-void ast_print(ast_s* ast) {
-    printf("%s:%d\n", ast_type_to_str(ast), (int) ast->children_size);
-    ast_s** children = ast->children;
-    if (!children) return;
+void ast_print(ast_s* ast, int level) {
+    if (!ast) return;
+    if (level != 0) {
+        printf("|");
+        for (int i = 0; i < level; i++) printf("_");
+    }
+    printf("%s: %d\n", ast_type_to_str(ast), (int)ast->children_size);
+    if (!ast->children) return;
     for (int i = 0; i < ast->children_size; i++) {
-        ast_print(children[i]);
+        ast_print(ast->children[i], level + 1);
     }
 }
