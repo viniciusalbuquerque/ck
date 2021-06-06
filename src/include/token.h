@@ -16,8 +16,11 @@ typedef struct TOKEN_STRUCT {
         TT_IF, // if
         TT_ATTRIB, // =
         TT_NUMBER, // a number
+        TT_CHAR, // a number
+        TT_STRING, // a number
         TT_COMMA, // ,
-        TT_SINGLE_QUOTE, // "
+        TT_SINGLE_QUOTE, // '
+        TT_DOUBLE_QUOTE, // "
         TT_COL, // :
         TT_SEMI_COL, // ;
         TT_EQ, // ==

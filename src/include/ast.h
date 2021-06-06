@@ -11,6 +11,7 @@ typedef struct AST_STRUCT {
         AT_ASSIGNMENT,
         AT_NUMBER,
         AT_CHAR,
+        AT_STRING,
         AT_RETURN,
         AT_CONDITIONAL,
     } type;

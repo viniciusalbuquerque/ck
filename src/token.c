@@ -3,7 +3,7 @@
 #include <string.h>
 #include "include/token.h"
 
-char* single_chars = "{[()]};:,\'";
+char* single_chars = "{[()]};:,";
 
 char* token_type_str_value(int type) {
     switch (type) {
@@ -68,6 +68,9 @@ char* token_type_str(int type) {
         case TT_REF: return "TT_REF";
         case TT_STAR: return "TT_STAR";
         case TT_SINGLE_QUOTE: return "TT_SINGLE_QUOTE";
+        case TT_DOUBLE_QUOTE: return "TT_DOUBLE_QUOTE";
+        case TT_CHAR: return "TT_CHAR";
+        case TT_STRING: return "TT_STRING";
         case TT_BAD_TOKEN: 
         default: return "TT_BAD_TOKEN";
     }

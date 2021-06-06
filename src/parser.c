@@ -53,26 +53,24 @@ ast_s* parser_parse_id(parser_s* parser) {
     return ast_id;
 }
 
-ast_s* parser_parse_char(parser_s* parser) {
+ast_s* parser_parse_string(parser_s* parser) {
+    printf("parser_parse_string\n");
     parser_skip_whitespace(parser);
-    if (parser->token->type != TT_SINGLE_QUOTE) {
-        print_and_exit("char", "\"", parser->token->value);
+    if (parser->token->type != TT_STRING) {
+        print_and_exit("string", "a string", parser->token->value);
     }
-
     parser_next_token(parser);
-    parser_skip_whitespace(parser);
+    return ast_init(AT_STRING);
+}
 
-    if (parser->token->type != TT_ID && parser->token->type != TT_NUMBER) {
+ast_s* parser_parse_char(parser_s* parser) {
+    printf("parser_parse_char\n");
+    parser_skip_whitespace(parser);
+    if (parser->token->type != TT_CHAR) {
         print_and_exit("char", "a char", parser->token->value);
     }
-
     parser_next_token(parser);
     parser_skip_whitespace(parser);
-    if (parser->token->type != TT_SINGLE_QUOTE) {
-        print_and_exit("char", "\'", parser->token->value);
-    }
-
-    parser_next_token(parser);
     return ast_init(AT_CHAR);
 }
 
@@ -87,8 +85,11 @@ ast_s* parser_parse_expression(parser_s* parser) {
         case TT_NUMBER:
             child = parser_parse_number(parser);
             break;
-        case TT_SINGLE_QUOTE:
+        case TT_CHAR:
             child = parser_parse_char(parser);
+            break;
+        case TT_STRING:
+            child = parser_parse_string(parser);
             break;
         default:
             break;
@@ -141,6 +142,7 @@ ast_s* parser_parse_return(parser_s* parser) {
     parser_next_token(parser);
     parser_skip_whitespace(parser);
     ast_s* ast_exp = parser_parse_expression(parser);
+    printf("return parsed expression\n");
     parser_skip_whitespace(parser);
     if (parser->token->type != TT_SEMI_COL) {
         print_and_exit("return", ";", parser->token->value);

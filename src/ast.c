@@ -24,6 +24,7 @@ char* ast_type_to_str(ast_s* ast) {
         case AT_NUMBER: return "AT_NUMBER";
         case AT_VARIABLE_DEC: return "AT_VARIABLE_DEC";
         case AT_CHAR: return "AT_CHAR";
+        case AT_STRING: return "AT_STRING";
     }
     return "AT_NOT_FOUND";
 }

@@ -98,6 +98,45 @@ token_s* lexer_parse_whitespace(lexer_s* lexer) {
     return token_init(ws, lexer->pos, TT_WS);
 }
 
+token_s* lexer_parse_char(lexer_s* lexer) {
+
+    if (lexer->current != '\'') {
+        printf("Error tokeninzing char. Expected '\'' and found %c\n", lexer->current);
+        exit(1);
+    }
+    int start = lexer->pos;
+    lexer_next(lexer);
+    char c = lexer->current;
+    lexer_next(lexer);
+
+    if (lexer->current != '\'') {
+        printf("Error tokeninzing char. Expected '\'' and found %c\n", lexer->current);
+        exit(1);
+    }
+
+    char* value = malloc(sizeof(char) + 1);
+    memset(value, '\0', 2);
+    *value = c;
+    lexer_next(lexer);
+    return token_init(value, start, TT_CHAR);
+}
+
+token_s* lexer_parse_string(lexer_s* lexer) {
+    if (lexer->current != '\"') {
+        printf("Error tokeninzing string. Expected '\"' and found %c\n", lexer->current);
+        exit(1);
+    }
+    int start = lexer->pos;
+    lexer_next(lexer);
+    while((lexer->current) != '\"') {
+        lexer_next(lexer);
+    }
+    int end = lexer->pos - 1;
+    char* str = substr(lexer->text, start + 1, end);
+    lexer_next(lexer);
+    return token_init(str, lexer->pos, TT_STRING);
+}
+
 token_s* lexer_next_token(lexer_s* lexer) {
     if (lexer->current == '\0') {
         char* value = malloc(sizeof(char));
@@ -108,6 +147,10 @@ token_s* lexer_next_token(lexer_s* lexer) {
     char c = lexer->current;
     if (token_is_single_char(c)) {
         return lexer_parse_single_char(lexer);
+    } else if (c == '\'') {
+        return lexer_parse_char(lexer);
+    } else if (c == '\"') {
+        return lexer_parse_string(lexer);
     } else if (isdigit(lexer->current)) {
         return lexer_parse_number_token(lexer);
     } else if (isalpha(lexer->current)) {
