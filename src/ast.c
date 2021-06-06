@@ -20,6 +20,10 @@ char* ast_type_to_str(ast_s* ast) {
         case AT_VARIABLE: return "AT_VARIABLE";
         case AT_RETURN: return "AT_RETURN";
         case AT_CONDITIONAL: return "AT_CONDITIONAL";
+        case AT_ASSIGNMENT: return "AT_ASSIGNMENT";
+        case AT_NUMBER: return "AT_NUMBER";
+        case AT_VARIABLE_DEC: return "AT_VARIABLE_DEC";
+        case AT_CHAR: return "AT_CHAR";
     }
     return "AT_NOT_FOUND";
 }

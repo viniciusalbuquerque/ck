@@ -9,6 +9,11 @@ parser_s* parser_init(lexer_s* lexer) {
     return parser;
 }
 
+void print_and_exit(char* parsing_element, char* expected, char* found) {
+    printf("Error parsing %s. Expected '%s' and found %s\n", parsing_element, expected, found);
+    exit(1);
+}
+
 token_s* parser_next_token(parser_s* parser) {
     return parser->token = lexer_next_token(parser->lexer);
 }
@@ -19,24 +24,79 @@ void parser_skip_whitespace(parser_s* parser) {
     }
 }
 
+ast_s* parser_parse_number(parser_s* parser) {
+    printf("parser_parse_number\n");
+    parser_skip_whitespace(parser);
+    if (parser->token->type != TT_NUMBER) {
+        print_and_exit("number", "a number", parser->token->value);
+    }
+    parser_next_token(parser);
+    return ast_init(AT_NUMBER);
+}
+
+ast_s* parser_parse_id(parser_s* parser) {
+    printf("parser_parse_id\n");
+    parser_skip_whitespace(parser);
+    if (parser->token->type != TT_ID) {
+        print_and_exit("id", "an id", parser->token->value);
+    }
+
+    parser_next_token(parser);
+    parser_skip_whitespace(parser);
+    ast_s* ast_id;
+    if (parser->token->type == TT_ATTRIB) {
+        ast_id = ast_init(AT_ASSIGNMENT);
+        ast_add_child(ast_id, parser_parse_expression(parser));
+    } else {
+        ast_id = ast_init(AT_VARIABLE);
+    }
+    return ast_id;
+}
+
+ast_s* parser_parse_char(parser_s* parser) {
+    parser_skip_whitespace(parser);
+    if (parser->token->type != TT_SINGLE_QUOTE) {
+        print_and_exit("char", "\"", parser->token->value);
+    }
+
+    parser_next_token(parser);
+    parser_skip_whitespace(parser);
+
+    if (parser->token->type != TT_ID && parser->token->type != TT_NUMBER) {
+        print_and_exit("char", "a char", parser->token->value);
+    }
+
+    parser_next_token(parser);
+    parser_skip_whitespace(parser);
+    if (parser->token->type != TT_SINGLE_QUOTE) {
+        print_and_exit("char", "\'", parser->token->value);
+    }
+
+    parser_next_token(parser);
+    return ast_init(AT_CHAR);
+}
+
 ast_s* parser_parse_expression(parser_s* parser) {
     printf("parser_parse_expression\n");
     parser_skip_whitespace(parser);
+    ast_s* child;
     switch(parser->token->type) {
         case TT_ID:
+            child = parser_parse_id(parser);
+            break;
         case TT_NUMBER:
-            parser_next_token(parser);
+            child = parser_parse_number(parser);
+            break;
+        case TT_SINGLE_QUOTE:
+            child = parser_parse_char(parser);
             break;
         default:
             break;
     }
+    ast_s* ast_exp = ast_init(AT_EXPRESSION);
+    if (child) ast_add_child(ast_exp, child);
     parser_skip_whitespace(parser);
-    return ast_init(AT_EXPRESSION);
-}
-
-void print_and_exit(char* parsing_element, char* expected, char* found) {
-    printf("Error parsing %s. Expected '%s' and found %s\n", parsing_element, expected, found);
-    exit(1);
+    return ast_exp;
 }
 
 ast_s* parser_parse_conditional(parser_s* parser) {
@@ -97,7 +157,6 @@ ast_s* parser_parser_variable(parser_s* parser) {
         print_and_exit("declaring variable", "var", parser->token->value);
     }
 
-    ast_s* ast_var_dec = ast_init(AT_VARIABLE);
 
     parser_next_token(parser);
     parser_skip_whitespace(parser);
@@ -128,6 +187,7 @@ ast_s* parser_parser_variable(parser_s* parser) {
     }
     parser_next_token(parser);
     parser_skip_whitespace(parser);
+    ast_s* ast_var_dec = ast_init(AT_VARIABLE_DEC);
     if (parser->token->type == TT_ATTRIB) {
         ast_s* ast_exp = parser_parse_expression(parser);
         ast_add_child(ast_var_dec, ast_exp);

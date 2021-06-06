@@ -16,7 +16,8 @@ typedef struct TOKEN_STRUCT {
         TT_IF, // if
         TT_ATTRIB, // =
         TT_NUMBER, // a number
-        TT_COMMA, //,
+        TT_COMMA, // ,
+        TT_SINGLE_QUOTE, // "
         TT_COL, // :
         TT_SEMI_COL, // ;
         TT_EQ, // ==

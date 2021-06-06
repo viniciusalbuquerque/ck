@@ -7,6 +7,10 @@ typedef struct AST_STRUCT {
         AT_STATEMENT,
         AT_EXPRESSION,
         AT_VARIABLE,
+        AT_VARIABLE_DEC,
+        AT_ASSIGNMENT,
+        AT_NUMBER,
+        AT_CHAR,
         AT_RETURN,
         AT_CONDITIONAL,
     } type;
