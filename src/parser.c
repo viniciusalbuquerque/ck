@@ -322,13 +322,9 @@ ast_s* parser_parse_function(parser_s* parser) {
         print_and_exit("function", "{", parser->token->value);
     }
 
-    parser_next_token(parser);
-    parser_skip_whitespace(parser);
+
     ast_s* ast_statement = parser_parse_statement(parser);
     ast_add_child(ast_fun, ast_statement);
-    if (parser->token->type != TT_CURLY_RB) {
-        print_and_exit("function", "}", parser->token->value);
-    }
     return ast_fun;
 }
 
