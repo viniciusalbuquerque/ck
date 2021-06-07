@@ -71,6 +71,8 @@ char* token_type_str(int type) {
         case TT_DOUBLE_QUOTE: return "TT_DOUBLE_QUOTE";
         case TT_CHAR: return "TT_CHAR";
         case TT_STRING: return "TT_STRING";
+        case TT_PLUS: return "TT_PLUS";
+        case TT_MINUS: return "TT_MINUS";
         case TT_BAD_TOKEN: 
         default: return "TT_BAD_TOKEN";
     }

@@ -10,11 +10,13 @@ parser_s* parser_init(lexer_s* lexer) {
 }
 
 void print_and_exit(char* parsing_element, char* expected, char* found) {
-    printf("Error parsing %s. Expected '%s' and found %s\n", parsing_element, expected, found);
+    printf("Error parsing %s. Expected '%s' and found '%s'\n", parsing_element, expected, found);
     exit(1);
 }
 
 token_s* parser_next_token(parser_s* parser) {
+    if (parser->token)
+        printf("%s ", token_type_str(parser->token->type));
     return parser->token = lexer_next_token(parser->lexer);
 }
 
@@ -74,6 +76,26 @@ ast_s* parser_parse_char(parser_s* parser) {
     return ast_init(AT_CHAR);
 }
 
+ast_s* parser_parse_lp_expression(parser_s* parser) {
+    printf("parser_parse_lp_expression\n");
+    parser_skip_whitespace(parser);
+    if (parser->token->type != TT_LP) {
+        print_and_exit("lp expression", "(", parser->token->value);
+    }
+    ast_s* ast_lp = ast_init(AT_EXPRESSION);
+    parser_next_token(parser);
+    parser_skip_whitespace(parser);
+    ast_s* ast_lp_child = parser_parse_expression(parser);
+    parser_next_token(parser);
+    parser_skip_whitespace(parser);
+    if (parser->token->type != TT_RP) {
+        print_and_exit("lp expression", ")", parser->token->value);
+    }
+    parser_next_token(parser);
+    ast_add_child(ast_lp, ast_lp_child);
+    return ast_lp;
+}
+
 ast_s* parser_parse_expression(parser_s* parser) {
     printf("parser_parse_expression\n");
     parser_skip_whitespace(parser);
@@ -90,6 +112,15 @@ ast_s* parser_parse_expression(parser_s* parser) {
             break;
         case TT_STRING:
             child = parser_parse_string(parser);
+            break;
+        case TT_LP:
+            child = parser_parse_lp_expression(parser);
+            break;
+        case TT_PLUS:
+        case TT_MINUS:
+            printf("plusminus\n");
+            parser_next_token(parser);
+            child = parser_parse_expression(parser);
             break;
         default:
             break;
@@ -241,7 +272,7 @@ ast_s* parser_parse_statement(parser_s* parser) {
         case TT_VAR:
             ast_child = parser_parser_variable(parser);
             break;
-        default: // We need a NO-OP
+        default:
             ast_child = parser_parse_expression(parser);
             break;
     }

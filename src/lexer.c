@@ -137,6 +137,38 @@ token_s* lexer_parse_string(lexer_s* lexer) {
     return token_init(str, lexer->pos, TT_STRING);
 }
 
+token_s* lexer_parse_plus(lexer_s* lexer) {
+    if (lexer->current != '+') {
+        printf("Error tokeninzing plus symbol. Expected '+' and found %c\n", lexer->current);
+        exit(1);
+    }
+    int start = lexer->pos;
+    lexer_next(lexer);
+//    if(lexer->current != '+') {
+    return token_init("+", start, TT_PLUS);
+//    }
+
+// TODO: ++ increment
+//    lexer_next(lexer);
+//    return token_init("++", start, TT_INC);
+}
+
+token_s* lexer_parse_minus(lexer_s* lexer) {
+    if (lexer->current != '-') {
+        printf("Error tokeninzing minus symbol. Expected '-' and found %c\n", lexer->current);
+        exit(1);
+    }
+    int start = lexer->pos;
+    lexer_next(lexer);
+//    if(lexer->current != '-') {
+    return token_init("-", start, TT_MINUS);
+//    }
+
+// TODO: ++ increment
+//    lexer_next(lexer);
+//    return token_init("--", start, TT_DECREMENT);
+}
+
 token_s* lexer_next_token(lexer_s* lexer) {
     if (lexer->current == '\0') {
         char* value = malloc(sizeof(char));
@@ -151,6 +183,10 @@ token_s* lexer_next_token(lexer_s* lexer) {
         return lexer_parse_char(lexer);
     } else if (c == '\"') {
         return lexer_parse_string(lexer);
+    } else if (c == '+') {
+        return lexer_parse_plus(lexer);
+    } else if (c == '-') {
+        return lexer_parse_minus(lexer);
     } else if (isdigit(lexer->current)) {
         return lexer_parse_number_token(lexer);
     } else if (isalpha(lexer->current)) {

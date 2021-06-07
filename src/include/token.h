@@ -33,6 +33,8 @@ typedef struct TOKEN_STRUCT {
         TT_TYPE, // type
         TT_RET, // return
         TT_WS, // whitespace
+        TT_PLUS, // +
+        TT_MINUS, // -
         TT_BAD_TOKEN, //a bad todken (don't know if I'm going to use it
         TT_EOF, // eof
     } type;
