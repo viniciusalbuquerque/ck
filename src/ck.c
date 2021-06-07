@@ -12,28 +12,24 @@ void ck_compile(char* file_text) {
 }
 
 char* ck_read_file(const char* filename) {
-    FILE *fp;
-    fp = fopen(filename, "rb");
-    if (fp == NULL) {
+    FILE* file = fopen(filename, "r");
+    if (!file) {
         printf("Could not read the file: %s\n", filename);
         exit(1);
     }
+    fseek(file, 0, SEEK_END);
+    size_t file_size = ftell(file);
+    fseek(file, 0, SEEK_SET);
 
-    char* line = NULL;
-    size_t len = 0;
-    ssize_t read;
-
-    char* buffer = (char*) calloc(1, sizeof(char));
-    buffer[0] = '\0';
-
-    while((read = getline(&line, &len, fp)) != -1) {
-        buffer = (char*) realloc(buffer, (strlen(buffer) + strlen(line) + 1) * sizeof(char));
-        strcat(buffer, line);
+    char* buffer = (char*) malloc(sizeof(char) * (file_size));
+    if (!buffer) {
+        fclose(file);
+        printf("Could not allocate buffer for file\n");
+        exit(1);
     }
-    fclose(fp);
 
-    if (line)
-        free(line);
+    fread(buffer, 1, file_size, file);
+    fclose(file);
     return buffer;
 }
 
@@ -46,5 +42,6 @@ int main(int argc, char* argv[]) {
     printf("argv[1]=%s\n", argv[1]);
     char* file_text = ck_read_file(argv[1]);
     ck_compile(file_text);
+    free(file_text);
     return 0;
 }
