@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "include/parser.h"
 
 parser_s* parser_init(lexer_s* lexer) {
@@ -249,12 +250,25 @@ ast_s* parser_parse_statement(parser_s* parser) {
     return ast_statement;
 }
 
-void parser_parse_function_args(parser_s* parser) {
+void parser_parse_function_args(parser_s* parser, ast_fun_def* ast_fun) {
     printf("parser_parse_function_args\n");
+    parser_skip_whitespace(parser);
+    int args_size = 0;
     while (parser->token->type != TT_RP) {
         if (parser->token->type != TT_ID) {
             return;
         }
+
+        args_size++;
+        ast_fun->args_size = args_size;
+        if (!ast_fun->ast_args_list) {
+            ast_fun->ast_args_list = malloc(sizeof(ast_fun_def*) * args_size);
+        } else {
+            ast_fun->ast_args_list = realloc(ast_fun->ast_args_list, sizeof(ast_fun_def*) * args_size);
+        }
+
+        ast_fun_args* ast_arg = malloc(sizeof(ast_fun_args));
+        ast_arg->name = parser->token->value;
 
         parser_next_token(parser);
         parser_skip_whitespace(parser);
@@ -266,6 +280,8 @@ void parser_parse_function_args(parser_s* parser) {
         if (parser->token->type != TT_TYPE) {
             print_and_exit("function args", "type for your variable", parser->token->value);
         }
+        //TODO: arg type
+
         parser_next_token(parser);
         parser_skip_whitespace(parser);
 
@@ -282,11 +298,13 @@ ast_s* parser_parse_function(parser_s* parser) {
         print_and_exit("function", "fun", parser->token->value);
     }
     ast_s* ast_fun = ast_init(AT_FUNCTION_DEFINITION);
+    ast_fun->ast_fun_def = malloc(sizeof(ast_fun_def));
     parser_next_token(parser);
     parser_skip_whitespace(parser);
     if (parser->token->type != TT_ID) {
         print_and_exit("function", "name for the function", parser->token->value);
     }
+    ast_fun->ast_fun_def->name = parser->token->value;
     parser_next_token(parser);
     parser_skip_whitespace(parser);
 
@@ -295,7 +313,7 @@ ast_s* parser_parse_function(parser_s* parser) {
     }
 
     parser_next_token(parser);
-    parser_parse_function_args(parser);
+    parser_parse_function_args(parser, ast_fun->ast_fun_def);
 
     if (parser->token->type != TT_RP) {
         print_and_exit("function", ")", parser->token->value);
@@ -315,13 +333,13 @@ ast_s* parser_parse_function(parser_s* parser) {
         print_and_exit("function", "return type", parser->token->value);
     }
 
+    //TODO: return type
     parser_next_token(parser);
     parser_skip_whitespace(parser);
 
     if (parser->token->type != TT_CURLY_LB) {
         print_and_exit("function", "{", parser->token->value);
     }
-
 
     ast_s* ast_statement = parser_parse_statement(parser);
     ast_add_child(ast_fun, ast_statement);

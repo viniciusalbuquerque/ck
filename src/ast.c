@@ -7,6 +7,15 @@ ast_s* ast_init(int type) {
     ast->type = type;
     ast->children = 0;
     ast->children_size = 0;
+    ast->ast_fun_def = 0;
+    ast->ast_variable = 0;
+    ast->ast_primitive = 0;
+    ast->ast_assignment = 0;
+    ast->ast_stmt = 0;
+    ast->ast_expression = 0;
+    ast->ast_conditional = 0;
+    ast->ast_return = 0;
+    ast->ast_compound = 0;
     return ast;
 }
 
@@ -25,6 +34,7 @@ char* ast_type_to_str(ast_s* ast) {
         case AT_VARIABLE_DEC: return "AT_VARIABLE_DEC";
         case AT_CHAR: return "AT_CHAR";
         case AT_STRING: return "AT_STRING";
+        case AT_ARGS: return "AT_ARGS";
     }
     return "AT_NOT_FOUND";
 }
