@@ -10,40 +10,42 @@ parser_s* parser_init(lexer_s* lexer) {
     return parser;
 }
 
-void print_and_exit(char* parsing_element, char* expected, char* found) {
-    printf("Error parsing %s. Expected '%s' and found %s\n", parsing_element, expected, found);
-    exit(1);
-}
-
-token_s* parser_next_token(parser_s* parser) {
-    return parser->token = lexer_next_token(parser->lexer);
+token_s* parser_get_current_token(parser_s* parser) {
+    return parser->token = lexer_current_token(parser->lexer);
 }
 
 void parser_skip_whitespace(parser_s* parser) {
     while(parser->token->type == TT_WS) {
-        parser_next_token(parser);
+        //parser_next_token(parser);
     }
+}
+
+token_s* parser_eat_token(parser_s* parser, int token_type) {
+    //parser_skip_whitespace(parser);
+    if (parser->token->type != token_type) {
+        printf("Parsing error. Did not expected: '%s'\n", parser->token->value);
+        exit(1);
+    }
+    token_s* token = parser->token;
+    token_s* token2 = parser_get_current_token(parser);
+    printf("\neat: %s %s\n", token_type_str(token->type), token_type_str(token2->type));
+    //parser_skip_whitespace(parser);
+    return token;
 }
 
 ast_s* parser_parse_number(parser_s* parser) {
     printf("parser_parse_number\n");
-    parser_skip_whitespace(parser);
-    if (parser->token->type != TT_NUMBER) {
-        print_and_exit("number", "a number", parser->token->value);
-    }
-    parser_next_token(parser);
-    return ast_init(AT_NUMBER);
+    token_s* token_number = parser_eat_token(parser, TT_NUMBER);
+    ast_s* ast_number = ast_init(AT_NUMBER);
+    ast_number->ast_primitive = malloc(sizeof(ast_primitive));
+    ast_number->ast_primitive->value = token_number->value;
+    return ast_number;
 }
 
 ast_s* parser_parse_id(parser_s* parser) {
     printf("parser_parse_id\n");
-    parser_skip_whitespace(parser);
-    if (parser->token->type != TT_ID) {
-        print_and_exit("id", "an id", parser->token->value);
-    }
+    parser_eat_token(parser, TT_ID);
 
-    parser_next_token(parser);
-    parser_skip_whitespace(parser);
     ast_s* ast_id;
     if (parser->token->type == TT_ATTRIB) {
         ast_id = ast_init(AT_ASSIGNMENT);
@@ -56,28 +58,24 @@ ast_s* parser_parse_id(parser_s* parser) {
 
 ast_s* parser_parse_string(parser_s* parser) {
     printf("parser_parse_string\n");
-    parser_skip_whitespace(parser);
-    if (parser->token->type != TT_STRING) {
-        print_and_exit("string", "a string", parser->token->value);
-    }
-    parser_next_token(parser);
-    return ast_init(AT_STRING);
+    token_s* token_str = parser_eat_token(parser, TT_STRING);
+    ast_s* ast_str = ast_init(AT_STRING);
+    ast_str->ast_primitive = malloc(sizeof(ast_primitive));
+    ast_str->ast_primitive->value = token_str->value;
+    return ast_str;
 }
 
 ast_s* parser_parse_char(parser_s* parser) {
     printf("parser_parse_char\n");
-    parser_skip_whitespace(parser);
-    if (parser->token->type != TT_CHAR) {
-        print_and_exit("char", "a char", parser->token->value);
-    }
-    parser_next_token(parser);
-    parser_skip_whitespace(parser);
-    return ast_init(AT_CHAR);
+    token_s* token_char = parser_eat_token(parser, TT_CHAR);
+    ast_s* ast_char = ast_init(AT_CHAR);
+    ast_char->ast_primitive = malloc(sizeof(ast_primitive));
+    ast_char->ast_primitive->value = token_char->value;
+    return ast_char;
 }
 
 ast_s* parser_parse_expression(parser_s* parser) {
     printf("parser_parse_expression\n");
-    parser_skip_whitespace(parser);
     ast_s* child;
     switch(parser->token->type) {
         case TT_ID:
@@ -97,37 +95,19 @@ ast_s* parser_parse_expression(parser_s* parser) {
     }
     ast_s* ast_exp = ast_init(AT_EXPRESSION);
     if (child) ast_add_child(ast_exp, child);
-    parser_skip_whitespace(parser);
     return ast_exp;
 }
 
 ast_s* parser_parse_conditional(parser_s* parser) {
     printf("parser_parse_conditional\n");
-    parser_skip_whitespace(parser);
-    if (parser->token->type != TT_IF) {
-        print_and_exit("conditional", "if", parser->token->value);
-    }
+    parser_eat_token(parser, TT_IF);
 
     ast_s* ast_conditional = ast_init(AT_CONDITIONAL);
 
-    parser_next_token(parser);
-    parser_skip_whitespace(parser);
-
-    if (parser->token->type != TT_LP) {
-        print_and_exit("conditional", "(", parser->token->value);
-    }
-
-    parser_next_token(parser);
-    parser_skip_whitespace(parser);
+    parser_eat_token(parser, TT_LP);
     ast_s* ast_exp = parser_parse_expression(parser);
-    parser_skip_whitespace(parser);
-
-    if (parser->token->type != TT_RP) {
-        print_and_exit("conditional", ")", parser->token->value);
-    }
-
+    parser_eat_token(parser, TT_RP);
     ast_add_child(ast_conditional, ast_exp);
-    parser_next_token(parser);
     ast_s* ast_stmt = parser_parse_statement(parser);
     ast_add_child(ast_conditional, ast_stmt);
     return ast_conditional;
@@ -135,91 +115,43 @@ ast_s* parser_parse_conditional(parser_s* parser) {
 
 ast_s* parser_parse_return(parser_s* parser) {
     printf("parser_parse_return\n");
-    parser_skip_whitespace(parser);
-    if (parser->token->type != TT_RET) {
-        print_and_exit("return", "return", parser->token->value);
-    }
+    parser_eat_token(parser, TT_RET);
     ast_s* ast_ret = ast_init(AT_RETURN);
-    parser_next_token(parser);
-    parser_skip_whitespace(parser);
     ast_s* ast_exp = parser_parse_expression(parser);
-    printf("return parsed expression\n");
-    parser_skip_whitespace(parser);
-    if (parser->token->type != TT_SEMI_COL) {
-        print_and_exit("return", ";", parser->token->value);
-    }
+    parser_eat_token(parser, TT_SEMI_COL);
     ast_add_child(ast_ret, ast_exp);
-    parser_next_token(parser);
-    parser_skip_whitespace(parser);
     return ast_ret;
 }
 
 ast_s* parser_parser_variable(parser_s* parser) {
-    parser_skip_whitespace(parser);
-    if (parser->token->type != TT_VAR) {
-        print_and_exit("declaring variable", "var", parser->token->value);
-    }
-
-
-    parser_next_token(parser);
-    parser_skip_whitespace(parser);
-    if (parser->token->type != TT_ID) {
-        print_and_exit("declaring variable", "a name for your variable", parser->token->value);
-    }
-    parser_next_token(parser);
-    parser_skip_whitespace(parser);
+    printf("parser_parser_variable");
+    parser_eat_token(parser, TT_VAR);
+    parser_eat_token(parser, TT_ID);
 
     while (parser->token->type == TT_COMMA) {
-        parser_next_token(parser);
-        parser_skip_whitespace(parser);
-        if (parser->token->type != TT_ID) {
-            print_and_exit("declaring variable", "a name for your variable", parser->token->value);
-        }
-        parser_next_token(parser);
-        parser_skip_whitespace(parser);
+        parser_eat_token(parser, TT_COMMA);
+        parser_eat_token(parser, TT_ID);
     }
 
     // For now it will be mandatory to declare type
-    if (parser->token->type != TT_COL) {
-        print_and_exit("declaring variable", ":", parser->token->value);
-    }
-    parser_next_token(parser);
-    parser_skip_whitespace(parser);
-    if (parser->token->type != TT_TYPE) {
-        print_and_exit("declaring variable", "a type for your variable", parser->token->value);
-    }
-    parser_next_token(parser);
-    parser_skip_whitespace(parser);
+    parser_eat_token(parser, TT_COL);
+    parser_eat_token(parser, TT_TYPE);
     ast_s* ast_var_dec = ast_init(AT_VARIABLE_DEC);
     if (parser->token->type == TT_ATTRIB) {
+        parser_eat_token(parser, TT_ATTRIB);
         ast_s* ast_exp = parser_parse_expression(parser);
         ast_add_child(ast_var_dec, ast_exp);
     }
-    if (parser->token->type != TT_SEMI_COL) {
-        print_and_exit("declaring variable", ";", parser->token->value);
-    }
-    parser_next_token(parser);
-    parser_skip_whitespace(parser);
+    parser_eat_token(parser, TT_SEMI_COL);
     return ast_var_dec;
 }
 
 ast_s* parser_parse_compound(parser_s* parser) {
     printf("parser_parse_compound\n");
-    parser_skip_whitespace(parser);
-    if (parser->token->type != TT_CURLY_LB) {
-        print_and_exit("compound", "{", parser->token->value);
-    }
-
+    parser_eat_token(parser, TT_CURLY_LB);
     ast_s* ast_compound = ast_init(AT_COMPOUND);
-    parser_next_token(parser);
-    parser_skip_whitespace(parser);
     ast_s* ast_stmt = parser_parse_statement(parser);
-    parser_skip_whitespace(parser);
-
-    if (parser->token->type != TT_CURLY_RB) {
-        print_and_exit("compound", "}", parser->token->value);
-    }
-
+    parser_eat_token(parser, TT_CURLY_RB);
     ast_add_child(ast_compound, ast_stmt);
     return ast_compound;
 }
@@ -228,7 +160,6 @@ ast_s* parser_parse_statement(parser_s* parser) {
     printf("parser_parse_statement\n");
     ast_s* ast_statement = ast_init(AT_STATEMENT);
     ast_s* ast_child = 0;
-    parser_skip_whitespace(parser);
     switch (parser->token->type) {
         case TT_CURLY_LB:
             ast_child = parser_parse_compound(parser);
@@ -253,118 +184,71 @@ ast_s* parser_parse_statement(parser_s* parser) {
 void parser_parse_function_args(parser_s* parser, ast_fun_def* ast_fun) {
     printf("parser_parse_function_args\n");
     parser_skip_whitespace(parser);
-    int args_size = 0;
     while (parser->token->type != TT_RP) {
-        if (parser->token->type != TT_ID) {
-            return;
-        }
+        token_s* token_id = parser_eat_token(parser, TT_ID);
 
-        args_size++;
-        ast_fun->args_size = args_size;
-        if (!ast_fun->ast_args_list) {
-            ast_fun->ast_args_list = malloc(sizeof(ast_fun_def*) * args_size);
+        int args_size = ast_fun->args_size;
+        ast_fun->args_size = args_size + 1;
+        if (args_size == 0) {
+            ast_fun->ast_args_list = malloc(sizeof(ast_fun_args*) * args_size);
         } else {
-            ast_fun->ast_args_list = realloc(ast_fun->ast_args_list, sizeof(ast_fun_def*) * args_size);
+            ast_fun->ast_args_list = realloc(ast_fun->ast_args_list, sizeof(ast_fun_args*) * ast_fun->args_size);
         }
 
         ast_fun_args* ast_arg = malloc(sizeof(ast_fun_args));
-        ast_arg->name = parser->token->value;
+        ast_arg->name = token_id->value;
 
-        parser_next_token(parser);
-        parser_skip_whitespace(parser);
-        if (parser->token->type != TT_COL) {
-            print_and_exit("function args", ":", parser->token->value);
-        }
-        parser_next_token(parser);
-        parser_skip_whitespace(parser);
-        if (parser->token->type != TT_TYPE) {
-            print_and_exit("function args", "type for your variable", parser->token->value);
-        }
-        //TODO: arg type
-
-        parser_next_token(parser);
-        parser_skip_whitespace(parser);
+        parser_eat_token(parser, TT_COL);
+        token_s* token_arg_type = parser_eat_token(parser, TT_TYPE);
+        ast_arg->type = token_arg_type->type; //TODO: get correct type.
+        ast_fun->ast_args_list[ast_fun->args_size-1] = ast_arg;
 
         if (parser->token->type == TT_COMMA) {
-            parser_next_token(parser);
+            parser_eat_token(parser, TT_COMMA);
         }
-        parser_skip_whitespace(parser);
     }
 }
 
 ast_s* parser_parse_function(parser_s* parser) {
     printf("parser_parse_function\n");
-    if (parser->token->type != TT_FUN) {
-        print_and_exit("function", "fun", parser->token->value);
-    }
+    parser_eat_token(parser, TT_FUN);
     ast_s* ast_fun = ast_init(AT_FUNCTION_DEFINITION);
     ast_fun->ast_fun_def = malloc(sizeof(ast_fun_def));
-    parser_next_token(parser);
-    parser_skip_whitespace(parser);
-    if (parser->token->type != TT_ID) {
-        print_and_exit("function", "name for the function", parser->token->value);
-    }
-    ast_fun->ast_fun_def->name = parser->token->value;
-    parser_next_token(parser);
-    parser_skip_whitespace(parser);
-
-    if (parser->token->type != TT_LP) {
-        print_and_exit("function", "(", parser->token->value);
-    }
-
-    parser_next_token(parser);
+    token_s* token_fun_name = parser_eat_token(parser, TT_ID);
+    ast_fun->ast_fun_def->name = token_fun_name->value;
+    parser_eat_token(parser, TT_LP);
     parser_parse_function_args(parser, ast_fun->ast_fun_def);
+    parser_eat_token(parser, TT_RP);
 
-    if (parser->token->type != TT_RP) {
-        print_and_exit("function", ")", parser->token->value);
+    if (parser->token->type == TT_COL) {
+        parser_eat_token(parser, TT_COL);
+        token_s* token_ret_type = parser_eat_token(parser, TT_TYPE);
+        ast_fun->ast_fun_def->return_type = token_ret_type->type; //TODO: get the return type. Maybe we don't need the token kind TT_TYPE?
     }
-
-    parser_next_token(parser);
-    parser_skip_whitespace(parser);
-
-    if (parser->token->type != TT_COL) {
-        print_and_exit("function", ":", parser->token->value);
-    }
-
-    parser_next_token(parser);
-    parser_skip_whitespace(parser);
-
-    if (parser->token->type != TT_TYPE) {
-        print_and_exit("function", "return type", parser->token->value);
-    }
-
-    //TODO: return type
-    parser_next_token(parser);
-    parser_skip_whitespace(parser);
 
     if (parser->token->type != TT_CURLY_LB) {
-        print_and_exit("function", "{", parser->token->value);
+        parser_eat_token(parser, TT_CURLY_LB);
+        // This is supposed to throw the error
     }
-
     ast_s* ast_statement = parser_parse_statement(parser);
     ast_add_child(ast_fun, ast_statement);
+    printf("\n%c %d\n", parser->token->value[0], parser->token->value[0]);
     return ast_fun;
 }
 
 ast_s* parser_parse(parser_s* parser) {
     ast_s* ast = ast_init(AT_PROGRAM);
     token_s* token = 0;
-    while ((token = parser_next_token(parser))->type != TT_EOF) {
+    while ((token = parser_get_current_token(parser))->type != TT_EOF) {
         ast_s* child = 0;
         switch(token->type) {
             case TT_FUN:
                 child = parser_parse_function(parser);
                 break;
             default:
-                parser_skip_whitespace(parser);
                 break;
         }
-        token = lexer_next_token(parser->lexer);
-
-        if (token->type == TT_BAD_TOKEN) {
-            printf("\nBAD_TOKEN. Exiting\n");
-            exit(1);
-        }
+        lexer_next(parser->lexer);
         if (child) ast_add_child(ast, child);
     }
     printf("parser_parse done\n");

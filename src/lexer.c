@@ -40,15 +40,14 @@ void lexer_previous(lexer_s* lexer) {
     lexer->current = text[lexer->pos];
 }
 
-void lexer_skip_whitespace(lexer_s* lexer) {
-    token_s* token = lexer_next_token(lexer);
-    while (token->type == TT_WS) {
-        token = lexer_next_token(lexer);
-    }
-}
-
 int is_whitespace(char c) {
     return isspace(c) || c == '\t' || c == 10 || c == 13;
+}
+
+void lexer_skip_whitespace(lexer_s* lexer) {
+    while (is_whitespace(lexer->current)) {
+        lexer_next(lexer);
+    }
 }
 
 char* substr(char* text, unsigned int start, unsigned int end) {
@@ -85,6 +84,7 @@ token_s* lexer_parse_single_char(lexer_s* lexer) {
     memset(value, '\0', 2);
     *value = lexer->current;
     lexer_next(lexer);
+    printf("\nsingle_char: %c\n", lexer->current);
     return token_init(value, lexer->pos, token_type_from_value(value[0]));
 }
 
@@ -137,7 +137,8 @@ token_s* lexer_parse_string(lexer_s* lexer) {
     return token_init(str, lexer->pos, TT_STRING);
 }
 
-token_s* lexer_next_token(lexer_s* lexer) {
+token_s* lexer_current_token(lexer_s* lexer) {
+    lexer_skip_whitespace(lexer);
     if (lexer->current == '\0') {
         char* value = malloc(sizeof(char));
         *value = '\0';
@@ -157,8 +158,8 @@ token_s* lexer_next_token(lexer_s* lexer) {
         return lexer_parse_alpha(lexer);
     } else if (is_whitespace(lexer->current)) {
         return lexer_parse_whitespace(lexer);
-    } 
-    printf("Was not expecting %c at position %d.\n", c, lexer->pos);
+    }
+    printf("Was not expecting %d at position %d.\n", c, lexer->pos);
     exit(1);
     /*char* value = malloc(sizeof(char));
     *value = c;

@@ -81,12 +81,14 @@ int is_a_type(char* value) {
 }
 
 int token_get_type_from_alphanum(char* value) {
-    if (strncmp(value, token_type_str_value(TT_FUN), strlen(value)) == 0) {
+    if (strcmp(value, token_type_str_value(TT_FUN)) == 0) {
         return TT_FUN;
     } else if(strcmp(value, token_type_str_value(TT_RET)) == 0) {
         return TT_RET;
     } else if(is_a_type(value)) {
         return TT_TYPE;
+    } else if(strcmp(value, token_type_str_value(TT_IF)) == 0) {
+        return TT_IF;
     }
     return TT_ID;
 }
@@ -96,6 +98,7 @@ token_s* token_init(char* value, unsigned int pos, int type) {
     token->value = value;
     token->pos = pos;
     token->type = type;
+    printf("%s ", token_type_str(type));
     return token;
 }
 
