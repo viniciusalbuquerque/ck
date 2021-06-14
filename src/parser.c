@@ -14,11 +14,11 @@ token_s* parser_get_current_token(parser_s* parser) {
     return parser->token = lexer_current_token(parser->lexer);
 }
 
-void parser_skip_whitespace(parser_s* parser) {
+/*void parser_skip_whitespace(parser_s* parser) {
     while(parser->token->type == TT_WS) {
         //parser_next_token(parser);
     }
-}
+}*/
 
 token_s* parser_eat_token(parser_s* parser, int token_type) {
     //parser_skip_whitespace(parser);
@@ -33,45 +33,51 @@ token_s* parser_eat_token(parser_s* parser, int token_type) {
     return token;
 }
 
-ast_s* parser_parse_number(parser_s* parser) {
+Primitive* parser_parse_number(parser_s* parser) {
     printf("parser_parse_number\n");
     token_s* token_number = parser_eat_token(parser, TT_NUMBER);
-    ast_s* ast_number = ast_init(AT_NUMBER);
-    ast_number->ast_primitive = malloc(sizeof(ast_primitive));
-    ast_number->ast_primitive->value = token_number->value;
-    return ast_number;
-}
-
-ast_s* parser_parse_id(parser_s* parser) {
-    printf("parser_parse_id\n");
-    parser_eat_token(parser, TT_ID);
-
-    ast_s* ast_id;
-    if (parser->token->type == TT_ATTRIB) {
-        ast_id = ast_init(AT_ASSIGNMENT);
-        ast_add_child(ast_id, parser_parse_expression(parser));
-    } else {
-        ast_id = ast_init(AT_VARIABLE);
-    }
-    return ast_id;
-}
-
-ast_s* parser_parse_string(parser_s* parser) {
-    printf("parser_parse_string\n");
-    token_s* token_str = parser_eat_token(parser, TT_STRING);
-    ast_s* ast_str = ast_init(AT_STRING);
-    ast_str->ast_primitive = malloc(sizeof(ast_primitive));
-    ast_str->ast_primitive->value = token_str->value;
-    return ast_str;
+    Primitive* primitive = malloc(sizeof(Primitive));
+    primitive->value = token_number->value;
+    primitive->type = TT_NUMBER;
+    return primitive;
 }
 
 ast_s* parser_parse_char(parser_s* parser) {
     printf("parser_parse_char\n");
     token_s* token_char = parser_eat_token(parser, TT_CHAR);
     ast_s* ast_char = ast_init(AT_CHAR);
-    ast_char->ast_primitive = malloc(sizeof(ast_primitive));
-    ast_char->ast_primitive->value = token_char->value;
+    ast_char->primitive = malloc(sizeof(Primitive));
+    ast_char->primitive->value = token_char->value;
     return ast_char;
+}
+
+
+ast_s* parser_parse_string(parser_s* parser) {
+    printf("parser_parse_string\n");
+    token_s* token_str = parser_eat_token(parser, TT_STRING);
+    ast_s* ast_str = ast_init(AT_STRING);
+    ast_str->primitive = malloc(sizeof(Primitive));
+    ast_str->primitive->value = token_str->value;
+    return ast_str;
+}
+
+ast_s* parser_parse_id(parser_s* parser) {
+    printf("parser_parse_id\n");
+    token_s* token = parser_eat_token(parser, TT_ID);
+    char* id_value = token->value;
+
+    ast_s* ast_id;
+    if (parser->token->type == TT_ATTRIB) {
+        ast_id = ast_init(AT_ASSIGNMENT);
+        ast_id->assignment = malloc(sizeof(Assignment));
+        ast_id->assignment->name = id_value;
+        ast_add_child(ast_id, parser_parse_expression(parser));
+    } else {
+        ast_id = ast_init(AT_VARIABLE);
+        ast_id->variable = malloc(sizeof(Variable));
+        ast_id->variable->name = id_value;
+    }
+    return ast_id;
 }
 
 ast_s* parser_parse_expression(parser_s* parser) {
@@ -82,7 +88,8 @@ ast_s* parser_parse_expression(parser_s* parser) {
             child = parser_parse_id(parser);
             break;
         case TT_NUMBER:
-            child = parser_parse_number(parser);
+            child = ast_init(AT_NUMBER);
+            child->primitive = parser_parse_number(parser);
             break;
         case TT_CHAR:
             child = parser_parse_char(parser);
