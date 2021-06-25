@@ -1,3 +1,4 @@
+#include "list.h"
 #include <stdlib.h>
 
 typedef struct RETURN {
@@ -29,17 +30,17 @@ typedef struct AST_CONDITIONAL {
 
 typedef struct AST_FUN_DEF_STRUCT {
     char* name;
-    struct AST_FUN_ARGS** ast_args_list;
+    list* args_list;
     size_t args_size;
     int return_type;
     struct AST_STATEMENT* ast_stmt;
 } Fun_definition;
 
-typedef struct AST_FUN_ARGS {
+typedef struct AST_FUN_ARG {
     char* name;
     char* value;
     int type;
-} Fun_args;
+} Fun_arg;
 
 typedef struct AST_VARIABLE {
     char* name;
@@ -53,8 +54,7 @@ typedef struct AST_PRIMITIVE {
 
 typedef struct AST_ASSIGNMENT {
     char* name;
-    char* value;
-    int type;
+    Expression* expression;
 } Assignment;
 
 typedef struct AST_STRUCT {
@@ -74,7 +74,7 @@ typedef struct AST_STRUCT {
         AT_CONDITIONAL,
         AT_ARGS,
     } type;
-    struct AST_STRUCT** children;
+    list* children;
     size_t children_size;
 
     Fun_definition* fun_def;

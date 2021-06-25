@@ -7,15 +7,14 @@ ast_s* ast_init(int type) {
     ast->type = type;
     ast->children = 0;
     ast->children_size = 0;
-    ast->ast_fun_def = 0;
-    ast->ast_variable = 0;
-    ast->ast_primitive = 0;
-    ast->ast_assignment = 0;
-    ast->ast_stmt = 0;
-    ast->ast_expression = 0;
-    ast->ast_conditional = 0;
-    ast->ast_return = 0;
-    ast->ast_compound = 0;
+    ast->assignment = 0;
+    ast->statement = 0;
+    ast->fun_def = 0;
+    ast->compound = 0;
+    ast->conditional = 0;
+    ast->primitive = 0;
+    ast->return_exp = 0;
+    ast->variable = 0;
     return ast;
 }
 
@@ -44,13 +43,8 @@ void ast_add_child(ast_s* ast, ast_s* child) {
     if (ast->type == AT_PROGRAM) {
         printf("add to %s a %s\n", ast_type_to_str(ast), ast_type_to_str(child));
     }
-    ast->children_size += 1;
-    if (!ast->children) {
-        ast->children = malloc(sizeof(ast_s*) * ast->children_size);
-    } else {
-        ast->children = realloc(ast->children, sizeof(ast_s*) * ast->children_size);
-    }
-    ast->children[ast->children_size - 1] = child;
+    ast->children = list_init(sizeof(ast_s*));
+    list_add_item(ast->children, child);
 }
 
 void ast_print(ast_s* ast, int level) {
@@ -61,7 +55,7 @@ void ast_print(ast_s* ast, int level) {
     }
     printf("%s: %d\n", ast_type_to_str(ast), (int)ast->children_size);
     if (!ast->children) return;
-    for (int i = 0; i < ast->children_size; i++) {
-        ast_print(ast->children[i], level + 1);
+    for (int i = 0; i < ast->children->size; i++) {
+        ast_print(ast->children->items[i], level + 1);
     }
 }

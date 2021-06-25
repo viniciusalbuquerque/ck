@@ -188,27 +188,19 @@ ast_s* parser_parse_statement(parser_s* parser) {
     return ast_statement;
 }
 
-void parser_parse_function_args(parser_s* parser, ast_fun_def* ast_fun) {
+void parser_parse_function_args(parser_s* parser, Fun_definition* ast_fun) {
     printf("parser_parse_function_args\n");
-    parser_skip_whitespace(parser);
+    ast_fun->args_list = list_init(sizeof(Fun_arg*));
     while (parser->token->type != TT_RP) {
         token_s* token_id = parser_eat_token(parser, TT_ID);
 
-        int args_size = ast_fun->args_size;
-        ast_fun->args_size = args_size + 1;
-        if (args_size == 0) {
-            ast_fun->ast_args_list = malloc(sizeof(ast_fun_args*) * args_size);
-        } else {
-            ast_fun->ast_args_list = realloc(ast_fun->ast_args_list, sizeof(ast_fun_args*) * ast_fun->args_size);
-        }
-
-        ast_fun_args* ast_arg = malloc(sizeof(ast_fun_args));
+        Fun_arg* ast_arg = malloc(sizeof(Fun_arg));
         ast_arg->name = token_id->value;
 
         parser_eat_token(parser, TT_COL);
         token_s* token_arg_type = parser_eat_token(parser, TT_TYPE);
         ast_arg->type = token_arg_type->type; //TODO: get correct type.
-        ast_fun->ast_args_list[ast_fun->args_size-1] = ast_arg;
+        list_add_item(ast_fun->args_list, ast_arg);
 
         if (parser->token->type == TT_COMMA) {
             parser_eat_token(parser, TT_COMMA);
@@ -220,17 +212,17 @@ ast_s* parser_parse_function(parser_s* parser) {
     printf("parser_parse_function\n");
     parser_eat_token(parser, TT_FUN);
     ast_s* ast_fun = ast_init(AT_FUNCTION_DEFINITION);
-    ast_fun->ast_fun_def = malloc(sizeof(ast_fun_def));
+    ast_fun->fun_def = malloc(sizeof(Fun_definition));
     token_s* token_fun_name = parser_eat_token(parser, TT_ID);
-    ast_fun->ast_fun_def->name = token_fun_name->value;
+    ast_fun->fun_def->name = token_fun_name->value;
     parser_eat_token(parser, TT_LP);
-    parser_parse_function_args(parser, ast_fun->ast_fun_def);
+    parser_parse_function_args(parser, ast_fun->fun_def);
     parser_eat_token(parser, TT_RP);
 
     if (parser->token->type == TT_COL) {
         parser_eat_token(parser, TT_COL);
         token_s* token_ret_type = parser_eat_token(parser, TT_TYPE);
-        ast_fun->ast_fun_def->return_type = token_ret_type->type; //TODO: get the return type. Maybe we don't need the token kind TT_TYPE?
+        ast_fun->fun_def->return_type = token_ret_type->type; //TODO: get the return type. Maybe we don't need the token kind TT_TYPE?
     }
 
     if (parser->token->type != TT_CURLY_LB) {
